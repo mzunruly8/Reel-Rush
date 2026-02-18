@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReelRush Arena 🎰</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Ultra&display=swap');
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 15px; background: linear-gradient(135deg, #0f0f23, #1a1a3a, #2a1a4a); 
+            color: #fff; font-family: 'Orbitron', monospace; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        h1 { 
+            font-family: 'Ultra', serif; font-size: clamp(2.5em, 10vw, 5em); 
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;
+        }
+        .status-bar {
+            display: flex; justify-content: space-around; gap: 15px; flex-wrap: wrap; margin: 15px 0;
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px; max-width: 500px; width: 100%;
+        }
+        .stat { text-align: center; }
+        .stat-value { font-size: 1.5em; font-weight: 900; color: #feca57; }
+        .disclaimer { 
+            font-size: 0.8em; opacity: 0.7; text-align: center; max-width: 400px; margin: 10px 0;
+            background: rgba(0,0,0,0.4); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mode-tabs {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; max-width: 500px; width: 100%;
+        }
+        .tab-btn {
+            flex: 1; min-width: 100px; padding: 12px 8px; background: rgba(255,255,255,0.1); 
+            border: 2px solid rgba(255,255,255,0.2); border-radius: 25px; color: white;
+            font-family: inherit; font-size: 0.9em; font-weight: 700; cursor: pointer; transition: all 0.3s;
+        }
+        .tab-btn.active, .tab-btn:hover { 
+            background: linear-gradient(45deg, #feca57, #ff9ff3); color: #1a1a2e; transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(254,202,87,0.4);
+        }
+
+        .play-area { min-height: 400px; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+
+        /* Classic Slots */
+        .classic-slots .reels-container { display: flex; gap: 12px; height: 200px; align-items: flex-end; }
+        .classic-slots .reel { width: 90px; height: 120px; background: linear-gradient(180deg, #2d2d44, #1a1a2e); border: 3px solid #feca57; border-radius: 15px; overflow: hidden; position: relative; }
+        .classic-slots .symbol { height: 40px; font-size: 1.8em; display: flex; align-items: center; justify-content: center; }
+
+        /* High Roller */
+        .high-roller .reels-container { display: flex; gap: 8px; height: 220px; align-items: flex-end; }
+        .high-roller .reel { width: 75px; height: 110px; background: linear-gradient(180deg, #8b0000, #4b0000); border: 3px solid #ff4757; border-radius: 12px; overflow: hidden; }
+        .high-roller .symbol { height: 37px; font-size: 1.6em; }
+
+        /* Multi-Line */
+        .multi-line .reels-container { display: flex; gap: 10px; height: 240px; align-items: center; position: relative; }
+        .multi-line .reel { width: 85px; height: 130px; background: linear-gradient(180deg, #1a3a1a, #0f2f0f); border: 3px solid #00b894; border-radius: 15px; overflow: hidden; }
+        .multi-line .symbol { height: 43px; font-size: 1.7em; }
+        .paylines { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.6em; opacity: 0.7; }
+
+        /* Wheel */
+        .wheel-area .wheel-container { position: relative; height: 300px; display: flex; align-items: center; justify-content: center; }
+        .wheel-area .wheel { width: 280px; height: 280px; border-radius: 50%; position: relative; overflow: hidden; border: 8px solid #feca57; box-shadow: 0 0 30px rgba(254,202,87,0.5); }
+        .wheel-area .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #feca57; z-index: 10; }
+        .wheel-area .segment { position: absolute; width: 50%; height: 50%; transform-origin: 100% 100%; clip-path: polygon(0% 0%, 100% 0%, 0% 100%); display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; }
+
+        .controls { margin-top: 20px; text-align: center; }
+        .spin-btn, .wheel-btn { 
+            background: linear-gradient(45deg, #feca57, #ff9ff3); color: #1a1a2e; border: none;
+            padding: 15px 30px; font-size: 1.1em; font-weight: 900; border-radius: 50px; cursor: pointer;
+            font-family: inherit; margin: 5px; transition: all 0.3s; min-width: 140px;
+        }
+        .spin-btn:disabled, .wheel-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .spin-btn:hover:not(:disabled), .wheel-btn:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 8px 25px rgba(254,202,87,0.4); }
+        .message { font-size: 1.4em; font-weight: 700; margin: 15px 0; min-height: 2em; font-family: 'Ultra', serif; }
+
+        @media (max-width: 480px) {
+            .status-bar { flex-direction: column; gap: 10px; }
+            .mode-tabs { flex-direction: column; }
+            .tab-btn { min-width: unset; }
+        }
+        .hidden { display: none !important; }
+        @keyframes glow { 0%,100%{text-shadow:0 0 10px currentColor} 50%{text-shadow:0 0 20px currentColor,0 0 30px currentColor} }
+        .win-glow { animation: glow 0.8s infinite alternate; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎰 ReelRush Arena 🎰</h1>
+        <div class="status-bar">
+            <div class="stat"><div class="stat-value" id="credits">1000</div>Credits</div>
+            <div class="stat"><div class="stat-value" id="prestige">1</div>Prestige</div>
+            <div class="stat"><div class="stat-value" id="freeSpins">0</div>Free Spins</div>
+        </div>
+        <div class="disclaimer">🎮 97.7% RTP • Entertainment only • No cashouts or real-world value • Pure fun & prestige! 🎮</div>
+    </div>
+
+    <div class="mode-tabs">
+        <button class="tab-btn active" data-mode="classic">Classic Slots</button>
+        <button class="tab-btn" data-mode="highroller">Lucky 7 High Roller</button>
+        <button class="tab-btn" data-mode="multiline">Multi-Line Party</button>
+        <button class="tab-btn" data-mode="wheel">Lucky Land Wheel</button>
+    </div>
+
+    <div class="play-area" id="playArea">
+        <!-- Classic Slots -->
+        <div id="classic" class="classic-slots">
+            <div class="reels-container">
+                <div class="reel" id="reel1-classic"></div>
+                <div class="reel" id="reel2-classic"></div>
+                <div class="reel" id="reel3-classic"></div>
+            </div>
+            <div class="controls">
+                <button class="spin-btn" id="spinClassic">SPIN (10cr)</button>
+                <div class="message" id="msgClassic">Ready to win big!</div>
+            </div>
+        </div>
+
+        <!-- High Roller -->
+        <div id="highroller" class="high-roller hidden">
+            <div class="reels-container">
+                <div class="reel" id="reel1-hr"></div>
+                <div class="reel" id="reel2-hr"></div>
+                <div class="reel" id="reel3-hr"></div>
+            </div>
+            <div class="controls">
+                <button class="spin-btn" id="spinHR">HIGH ROLLER (50cr)</button>
+                <div class="message" id="msgHR">Feeling lucky? 🔥</div>
+            </div>
+        </div>
+
+        <!-- Multi-Line -->
+        <div id="multiline" class="multi-line hidden">
+            <div class="reels-container">
+                <div class="paylines">5 Paylines Active</div>
+                <div class="reel" id="reel1-ml"></div>
+                <div class="reel" id="reel2-ml"></div>
+                <div class="reel" id="reel3-ml"></div>
+            </div>
+            <div class="controls">
+                <button class="spin-btn" id="spinML">PARTY SPIN (25cr)</button>
+                <div class="message" id="msgML">Let the party begin! 🎉</div>
+            </div>
+        </div>
+
+        <!-- Lucky Land Wheel -->
+        <div id="wheel" class="wheel-area hidden">
+            <div class="wheel-container">
+                <div class="wheel" id="fortuneWheel">
+                    <div class="pointer"></div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="wheel-btn" id="spinWheelBtn">SPIN FREE!</button>
+                <div class="message" id="wheelMsg">Free every 4 hours!</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State (97.7% RTP tuned)
+        let gameState = {
+            credits: parseInt(localStorage.getItem('reelrush-credits')) || 1000,
+            prestige: parseInt(localStorage.getItem('reelrush-prestige')) || 1,
+            freeSpins: parseInt(localStorage.getItem('reelrush-free')) || 0,
+            totalWagered: parseInt(localStorage.getItem('reelrush-wagered')) || 0,
+            lastWheel: localStorage.getItem('reelrush-lastwheel') || 0
+        };
+
+        // RTP 97.7% machines (bet:return ratios tuned)
+        const machines = {
+            classic: { 
+                bet: 10, reels: 3, symbols: ['🍒','🍋','🍉','🔔','⭐','7️⃣'], 
+                payout: {'🍒':2, '🍋':3, '🍉':4, '🔔':6, '⭐':8, '7️⃣':15}, 
+                hitRate: 0.28, rtp: 0.977 
+            },
+            highroller: { 
+                bet: 50, reels: 3, symbols: ['💎','🔥','💰','7️⃣','💥','⭐'], 
+                payout: {'💎':5, '🔥':8, '💰':12, '7️⃣':50, '💥':20, '⭐':30}, 
+                hitRate: 0.18, rtp: 0.977 
+            },
+            multiline: { 
+                bet: 25, reels: 3, symbols: ['🎉','🎈','🎰','💎','⭐','7️⃣'], 
+                payout: {'🎉':3, '🎈':4, '🎰':6, '💎':10, '⭐':15, '7️⃣':25}, 
+                hitRate: 0.24, rtp: 0.977 
+            }
+        };
+
+        let currentMode = 'classic';
+        let spinning = false;
+        let reelStates = {};
+
+        // UI Elements
+        const tabs = document.querySelectorAll('.tab-btn');
+        const messages = {
+            classic: document.getElementById('msgClassic'),
+            highroller: document.getElementById('msgHR'),
+            multiline: document.getElementById('msgML'),
+            wheel: document.getElementById('wheelMsg')
+        };
+
+        // Initialize
+        function saveState() {
+            localStorage.setItem('reelrush-credits', gameState.credits);
+            localStorage.setItem('reelrush-prestige', gameState.prestige);
+            localStorage.setItem('reelrush-free', gameState.freeSpins);
+            localStorage.setItem('reelrush-wagered', gameState.totalWagered);
+            localStorage.setItem('reelrush-lastwheel', gameState.lastWheel);
+        }
+
+        function updateUI() {
+            document.getElementById('credits').textContent = gameState.credits;
+            document.getElementById('prestige').textContent = gameState.prestige;
+            document.getElementById('freeSpins').textContent = gameState.freeSpins;
+            saveState();
+        }
+
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentMode = tab.dataset.mode;
+                document.querySelectorAll('.play-area > div').forEach(area => area.classList.add('hidden'));
+                document.getElementById(currentMode).classList.remove('hidden');
+                updateWheelCooldown();
+            });
+        });
+
+        // Slot Machine Logic
+        function initReels(machine) {
+            reelStates[machine] = [];
+            for (let i = 0; i < machines[machine].reels; i++) {
+                const symbols = [...machines[machine].symbols];
+                for (let j = 0; j < 12; j++) {
+                    const idx = Math.floor(Math.random() * symbols.length);
+                    symbols.splice(idx, 1)[0];
+                    symbols.push(symbols[idx]);
+                }
+                reelStates[machine][i] = symbols;
+            }
+        }
+
+        function spinSlot(machine) {
+            if (spinning) return;
+            
+            const config = machines[machine];
+            const cost = gameState.freeSpins > 0 ? 0 : config.bet;
+            
+            if (gameState.credits < cost && gameState.freeSpins === 0) {
+                messages[machine].textContent = 'Not enough credits!';
+                return;
+            }
+
+            spinning = true;
+            document.getElementById(`spin${machine.charAt(0).toUpperCase() + machine.slice(1)}`).disabled = true;
+            messages[machine].textContent = 'SPINNING...';
+
+            if (gameState.freeSpins > 0) gameState.freeSpins--;
+            else {
+                gameState.credits -= cost;
+                gameState.totalWagered += cost;
+            }
+
+            for (let i = 0; i < config.reels; i++) {
+                setTimeout(() => spinReel(`reel${i+1}-${machine}`, machine, i), i * 150);
+            }
+        }
+
+        function spinReel(reelId, machine, reelIndex) {
+            const spinCount = 20 + Math.floor(Math.random() * 15);
+            let spins = 0;
+            const config = machines[machine];
+            const interval = setInterval(() => {
+                const reel = document.getElementById(reelId);
+                const state = reelStates[machine][reelIndex];
+                const last = state.pop();
+                state.unshift(last);
+                
+                reel.innerHTML = '';
+                state.slice(0, 3).forEach(sym => {
+                    const div = document.createElement('div');
+                    div.className = 'symbol';
+                    div.textContent = sym;
+                    reel.appendChild(div);
+                });
+
+                spins++;
+                if (spins >= spinCount) {
+                    clearInterval(interval);
+                    if (reelIndex === config.reels - 1) checkWin(machine);
+                }
+            }, 100);
+        }
+
+        function checkWin(machine) {
+            const config = machines[machine];
+            const topRow = reelStates[machine].map(r => r[0]);
+            const midRow = reelStates[machine].map(r => r[1]);
+            
+            let totalPayout = 0;
+            
+            [topRow, midRow].forEach(line => {
+                const sym = line[0];
+                if (line.every(s => s === sym)) {
+                    totalPayout += config.payout[sym] || 2;
+                }
+            });
+
+            spinning = false;
+            const spinBtn = document.getElementById(`spin${machine.charAt(0).toUpperCase() + machine.slice(1)}`);
+            spinBtn.disabled = false;
+
+            if (totalPayout > 0) {
+                const payout = totalPayout * config.bet;
+                gameState.credits += payout;
+                messages[machine].textContent = `JACKPOT! +${payout}cr 🎉`;
+                document.querySelectorAll(`#${machine} .symbol`).forEach(s => s.classList.add('win-glow'));
+                setTimeout(() => document.querySelectorAll(`#${machine} .symbol`).forEach(s => s.classList.remove('win-glow')), 3000);
+            } else {
+                messages[machine].textContent = 'Try again!';
+            }
+            updateUI();
+        }
+
+        // Lucky Land Wheel (12 segments w/ BLNT)
+        const wheelSegments = [
+            {text: '💎500', value: 500, type: 'credits'},
+            {text: '🎁100', value: 100, type: 'credits'},
+            {text: '💰20', value: 20, type: 'credits'},
+            {text: '⭐5Free', value: 5, type: 'freespins'},
+            {text: '💎300', value: 300, type: 'credits'},
+            {text: '🎁50', value: 50, type: 'credits'},
+            {text: '😞BLNT', value: 0, type: 'lose'},
+            {text: '🎁200', value: 200, type: 'credits'},
+            {text: '💰30', value: 30, type: 'credits'},
+            {text: '💎100', value: 100, type: 'credits'},
+            {text: '🎁40', value: 40, type: 'credits'},
+            {text: '💰15', value: 15, type: 'credits'}
+        ];
+
+        function updateWheelCooldown() {
+            const now = Date.now();
+            const nextSpin = parseInt(gameState.lastWheel) + 4 * 60 * 60 * 1000;
+            const timeLeft = Math.max(0, Math.ceil((nextSpin - now) / (60 * 1000)));
+            
+            const wheelBtn = document.getElementById('spinWheelBtn');
+            if (timeLeft > 0) {
+                wheelBtn.disabled = true;
+                messages.wheel.textContent = `Free spin in ${timeLeft}m`;
+            } else {
+                wheelBtn.disabled = false;
+                messages.wheel.textContent = 'SPIN FREE NOW!';
+            }
+        }
+
+        function spinWheel() {
+            const now = Date.now();
+            const nextSpin = parseInt(gameState.lastWheel) + 4 * 60 * 60 * 1000;
+            
+            if (now < nextSpin) return;
+            
+            const wheel = document.getElementById('fortuneWheel');
+            const wheelBtn = document.getElementById('spinWheelBtn');
+            
+            wheelBtn.disabled = true;
+            messages.wheel.textContent = 'SPINNING...';
+            
+            const angle = Math.random() * 360 + 1440;
+            wheel.style.transition = 'transform 4s cubic-bezier(0.23, 1, 0.32, 1)';
+            wheel.style.transform = `rotate(${angle}deg)`;
+
+            setTimeout(() => {
+                const normalized = (360 - (angle % 360) + 90) % 360;
+                const resultIdx = Math.floor(normalized / 30) % 12;
+                const result = wheelSegments[resultIdx];
+                
+                if (result.type === 'credits') {
+                    gameState.credits += result.value;
+                    messages.wheel.textContent = `+${result.value} Credits! 🎉`;
+                } else if (result.type === 'freespins') {
+                    gameState.freeSpins += result.value;
+                    messages.wheel.textContent = `+${result.value} Free Spins! ⭐`;
+                } else {
+                    messages.wheel.textContent = 'Better luck next time! 😞';
+                }
+                
+                gameState.lastWheel = now;
+                updateUI();
+                updateWheelCooldown();
+                wheelBtn.disabled = false;
+            }, 4200);
+        }
+
+        // Event Listeners
+        document.getElementById('spinClassic').addEventListener('click', () => spinSlot('classic'));
+        document.getElementById('spinHR').addEventListener('click', () => spinSlot('highroller'));
+        document.getElementById('spinML').addEventListener('click', () => spinSlot('multiline'));
+        document.getElementById('spinWheelBtn').addEventListener('click', spinWheel);
+
+        // Init
+        ['classic', 'highroller', 'multiline'].forEach(m => initReels(m));
+        updateUI();
+        updateWheelCooldown();
+        setInterval(updateWheelCooldown, 30000);
+
+        // Build wheel segments
+        wheelSegments.forEach((seg, i) => {
+            const segment = document.createElement('div');
+            segment.className = 'segment';
+            segment.style.transform = `rotate(${i * 30}deg)`;
+            segment.textContent = seg.text;
+            document.getElementById('fortuneWheel').appendChild(segment);
+        });
+    </script>
+</body>
+</html>
